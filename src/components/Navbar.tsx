@@ -3,6 +3,42 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useLanguage, LANG_LABELS, Language } from "./LanguageContext";
 
+// ── Chevron icon ──────────────────────────────────────────────────────────────
+function Chevron({ open }: { open?: boolean }) {
+  return (
+    <svg
+      width="10" height="6" viewBox="0 0 10 6"
+      fill="none" stroke="currentColor"
+      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+      style={{ transition: "transform 0.25s ease", transform: open ? "rotate(180deg)" : "rotate(0deg)", display: "block" }}
+    >
+      <path d="M1 1l4 4 4-4" />
+    </svg>
+  );
+}
+
+// ── Sun / Moon icons ──────────────────────────────────────────────────────────
+function SunIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+      stroke="#c8a84e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  );
+}
+function MoonIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+      stroke="#a68a3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -10,6 +46,7 @@ export default function Navbar() {
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const { t, lang, setLang, theme, toggleTheme } = useLanguage();
+  const isDark = theme === "dark";
 
   const NAV_ITEMS = [
     {
@@ -44,92 +81,89 @@ export default function Navbar() {
   ];
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
-    if (mobileOpen) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
+    const handler = (e: MouseEvent) => {
       if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  const isDark = theme === "dark";
 
   return (
     <>
-      <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999,
-        background: scrolled ? "var(--nav-scrolled)" : "transparent",
-        backdropFilter: scrolled ? "blur(20px)" : "none",
-        borderBottom: scrolled ? "1px solid var(--border)" : "none",
-        transition: "all 0.4s ease",
-        padding: scrolled ? "8px 0" : "16px 0",
-      }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
-            <img src="/8thgbfest-white.png" alt="Greek Barber Festival"
-              style={{ height: scrolled ? 45 : 55, transition: "height 0.4s ease", filter: "var(--logo-filter)" }} />
+      {/* ─── NAV BAR ─────────────────────────────────────────────────────────── */}
+      <nav className={`gbf-nav${scrolled ? " gbf-nav--scrolled" : ""}`}>
+        <div className="gbf-nav__inner">
+
+          {/* Logo */}
+          <Link href="/" className="gbf-nav__logo">
+            <img src="/8thgbfest-white.png" alt="Greek Barber Festival" />
           </Link>
 
-          {/* Desktop Nav */}
-          <div style={{ display: "flex", gap: 20, alignItems: "center" }} className="desktop-nav">
+          {/* Desktop links */}
+          <div className="gbf-nav__links">
             {NAV_ITEMS.map((item) =>
               item.children ? (
-                <div key={item.href} className="dropdown">
-                  <Link href={item.href} className="nav-link">
-                    {item.label}
-                    <svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor" style={{ marginLeft: 4, verticalAlign: "middle" }}>
-                      <path d="M5 6L0 0h10z" />
-                    </svg>
+                <div key={item.href} className="gbf-dropdown">
+                  <Link href={item.href} className="gbf-nav__link">
+                    <span>{item.label}</span>
+                    <Chevron />
                   </Link>
-                  <div className="dropdown-menu">
+                  <div className="gbf-dropdown__panel">
                     {item.children.map((child) => (
-                      <Link key={child.href} href={child.href}>{child.label}</Link>
+                      <Link key={child.href} href={child.href} className="gbf-dropdown__item">
+                        {child.label}
+                      </Link>
                     ))}
                   </div>
                 </div>
               ) : (
-                <Link key={item.href} href={item.href} className="nav-link">{item.label}</Link>
+                <Link key={item.href} href={item.href} className="gbf-nav__link">
+                  {item.label}
+                </Link>
               )
             )}
+          </div>
 
-            {/* Theme Toggle */}
-            <button onClick={toggleTheme} aria-label="Toggle theme"
-              title={isDark ? "Light mode" : "Dark mode"}
-              style={{ background: "var(--gold-bg)", border: "1px solid var(--border)", borderRadius: 20, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.3s", flexShrink: 0 }}>
-              {isDark
-                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8a84e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a68a3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-              }
+          {/* Right controls */}
+          <div className="gbf-nav__controls">
+            <button onClick={toggleTheme} aria-label={isDark ? "Light mode" : "Dark mode"} className="gbf-icon-btn">
+              {isDark ? <SunIcon /> : <MoonIcon />}
             </button>
 
-            {/* Language Switcher */}
             <div ref={langRef} style={{ position: "relative" }}>
-              <button onClick={() => setLangOpen(!langOpen)}
-                style={{ background: "var(--gold-bg)", border: "1px solid var(--border)", borderRadius: 20, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6, cursor: "pointer", color: "var(--color-gold)", fontFamily: "var(--font-display)", fontSize: "0.8rem", letterSpacing: "0.05em", transition: "all 0.3s" }}>
-                <span style={{ fontSize: "1rem" }}>{LANG_LABELS[lang].flag}</span>
+              <button onClick={() => setLangOpen((o) => !o)} className="gbf-lang-btn">
+                <span className="gbf-lang-btn__flag">{LANG_LABELS[lang].flag}</span>
                 <span>{lang.toUpperCase()}</span>
-                <svg width="8" height="5" viewBox="0 0 10 6" fill="currentColor" style={{ transform: langOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}><path d="M5 6L0 0h10z"/></svg>
+                <Chevron open={langOpen} />
               </button>
 
               {langOpen && (
-                <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden", minWidth: 170, boxShadow: "0 12px 40px rgba(0,0,0,0.3)", zIndex: 100 }}>
+                <div className="gbf-lang-panel">
                   {(Object.keys(LANG_LABELS) as Language[]).map((l) => (
-                    <button key={l} onClick={() => { setLang(l); setLangOpen(false); }}
-                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: l === lang ? "var(--gold-bg)" : "transparent", border: "none", borderBottom: "1px solid var(--border-faint)", cursor: "pointer", color: l === lang ? "var(--color-gold)" : "var(--text-secondary)", fontFamily: "var(--font-body)", fontSize: "0.9rem", textAlign: "left", transition: "background 0.2s", direction: "ltr" }}>
-                      <span style={{ fontSize: "1.1rem" }}>{LANG_LABELS[l].flag}</span>
+                    <button
+                      key={l}
+                      onClick={() => { setLang(l); setLangOpen(false); }}
+                      className={`gbf-lang-panel__item${l === lang ? " gbf-lang-panel__item--active" : ""}`}
+                    >
+                      <span>{LANG_LABELS[l].flag}</span>
                       <span>{LANG_LABELS[l].label}</span>
-                      {l === lang && <span style={{ marginLeft: "auto", color: "var(--color-gold)" }}>✓</span>}
+                      {l === lang && (
+                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor"
+                          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: "auto" }}>
+                          <polyline points="2 7 6 11 12 3" />
+                        </svg>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -138,36 +172,32 @@ export default function Navbar() {
           </div>
 
           {/* Mobile controls */}
-          <div style={{ display: "none", alignItems: "center", gap: 8 }} className="mobile-controls">
-            <button onClick={toggleTheme} aria-label="Toggle theme"
-              style={{ background: "var(--gold-bg)", border: "1px solid var(--border)", borderRadius: 20, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-              {isDark
-                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8a84e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a68a3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-              }
+          <div className="gbf-mobile-controls">
+            <button onClick={toggleTheme} aria-label="Toggle theme" className="gbf-icon-btn gbf-icon-btn--sm">
+              {isDark ? <SunIcon /> : <MoonIcon />}
             </button>
-
-            <button onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 8, zIndex: 10001 }}>
-              <div style={{ width: 28, height: 20, position: "relative" }}>
-                <span style={{ position: "absolute", left: 0, width: "100%", height: 2, background: mobileOpen ? "var(--color-gold)" : "var(--text-primary)", transition: "all 0.3s", top: mobileOpen ? 9 : 0, transform: mobileOpen ? "rotate(45deg)" : "none" }} />
-                <span style={{ position: "absolute", left: 0, width: "100%", height: 2, background: "var(--text-primary)", top: 9, opacity: mobileOpen ? 0 : 1, transition: "opacity 0.3s" }} />
-                <span style={{ position: "absolute", left: 0, width: "100%", height: 2, background: mobileOpen ? "var(--color-gold)" : "var(--text-primary)", transition: "all 0.3s", top: mobileOpen ? 9 : 18, transform: mobileOpen ? "rotate(-45deg)" : "none" }} />
-              </div>
+            <button onClick={() => setMobileOpen((o) => !o)} aria-label="Toggle menu" className="gbf-hamburger">
+              <span className={`gbf-hamburger__bar gbf-hamburger__bar--1${mobileOpen ? " open" : ""}`} />
+              <span className={`gbf-hamburger__bar gbf-hamburger__bar--2${mobileOpen ? " open" : ""}`} />
+              <span className={`gbf-hamburger__bar gbf-hamburger__bar--3${mobileOpen ? " open" : ""}`} />
             </button>
           </div>
+
         </div>
       </nav>
 
-      {/* Mobile Menu */}
+      {/* ─── MOBILE MENU ────────────────────────────────────────────────────── */}
       {mobileOpen && (
-        <div className="mobile-menu" onClick={(e) => { if (e.target === e.currentTarget) setMobileOpen(false); }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {/* Language row */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: 16, borderBottom: "1px solid var(--border-faint)", marginBottom: 8 }}>
+        <div className="gbf-mobile-menu" onClick={(e) => { if (e.target === e.currentTarget) setMobileOpen(false); }}>
+          <div className="gbf-mobile-menu__body">
+
+            <div className="gbf-mobile-menu__langs">
               {(Object.keys(LANG_LABELS) as Language[]).map((l) => (
-                <button key={l} onClick={() => setLang(l)}
-                  style={{ background: l === lang ? "var(--gold-bg)" : "transparent", border: `1px solid ${l === lang ? "var(--color-gold)" : "var(--border)"}`, borderRadius: 16, padding: "4px 10px", cursor: "pointer", color: l === lang ? "var(--color-gold)" : "var(--text-muted)", fontSize: "0.8rem", fontFamily: "var(--font-display)", display: "flex", alignItems: "center", gap: 4 }}>
+                <button
+                  key={l}
+                  onClick={() => setLang(l)}
+                  className={`gbf-mobile-menu__lang-chip${l === lang ? " active" : ""}`}
+                >
                   <span>{LANG_LABELS[l].flag}</span>
                   <span>{l.toUpperCase()}</span>
                 </button>
@@ -175,24 +205,34 @@ export default function Navbar() {
             </div>
 
             {NAV_ITEMS.map((item) => (
-              <div key={item.href}>
-                <Link href={item.href} onClick={() => !item.children && setMobileOpen(false)}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", color: "var(--text-primary)", textDecoration: "none", fontFamily: "var(--font-display)", fontSize: "1.2rem", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid var(--border-faint)" }}>
-                  {item.label}
+              <div key={item.href} className="gbf-mobile-menu__row">
+                <div className="gbf-mobile-menu__row-top">
+                  <Link
+                    href={item.href}
+                    onClick={() => !item.children && setMobileOpen(false)}
+                    className="gbf-mobile-menu__row-label"
+                  >
+                    {item.label}
+                  </Link>
                   {item.children && (
-                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenDropdown(openDropdown === item.href ? null : item.href); }}
-                      style={{ background: "none", border: "none", color: "var(--color-gold)", cursor: "pointer", padding: "4px 8px" }}>
-                      <svg width="12" height="8" viewBox="0 0 12 8" fill="currentColor" style={{ transform: openDropdown === item.href ? "rotate(180deg)" : "none", transition: "transform 0.3s" }}>
-                        <path d="M6 8L0 0h12z" />
-                      </svg>
+                    <button
+                      onClick={() => setOpenDropdown(openDropdown === item.href ? null : item.href)}
+                      className="gbf-mobile-menu__expand"
+                    >
+                      <Chevron open={openDropdown === item.href} />
                     </button>
                   )}
-                </Link>
+                </div>
+
                 {item.children && openDropdown === item.href && (
-                  <div style={{ paddingLeft: 20, paddingBottom: 8 }}>
+                  <div className="gbf-mobile-menu__sub">
                     {item.children.map((child) => (
-                      <Link key={child.href} href={child.href} onClick={() => setMobileOpen(false)}
-                        style={{ display: "block", padding: "10px 0", color: "var(--text-muted)", textDecoration: "none", fontSize: "0.95rem", borderBottom: "1px solid var(--border-faint)" }}>
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        onClick={() => setMobileOpen(false)}
+                        className="gbf-mobile-menu__sub-link"
+                      >
                         {child.label}
                       </Link>
                     ))}
@@ -204,23 +244,236 @@ export default function Navbar() {
         </div>
       )}
 
+      {/* ─── STYLES ─────────────────────────────────────────────────────────── */}
       <style>{`
+
+        /* Nav shell */
+        .gbf-nav {
+          position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+          padding: 18px 0;
+          background: transparent;
+          transition: padding 0.35s ease, background 0.35s ease,
+                      backdrop-filter 0.35s ease, border-bottom 0.35s ease;
+        }
+        .gbf-nav--scrolled {
+          padding: 10px 0;
+          background: var(--nav-scrolled);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-bottom: 1px solid var(--border);
+        }
+        .gbf-nav__inner {
+          max-width: 1300px;
+          margin: 0 auto;
+          padding: 0 32px;
+          display: flex;
+          align-items: center;
+          gap: 32px;
+        }
+
+        /* Logo */
+        .gbf-nav__logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
+        .gbf-nav__logo img {
+          height: 52px;
+          filter: var(--logo-filter);
+          transition: height 0.35s ease;
+        }
+        .gbf-nav--scrolled .gbf-nav__logo img { height: 40px; }
+
+        /* Desktop link list */
+        .gbf-nav__links { display: flex; align-items: center; gap: 2px; flex: 1; }
+
+        /* Individual nav link */
+        .gbf-nav__link {
+          display: inline-flex; align-items: center; gap: 5px;
+          padding: 7px 12px;
+          border-radius: 8px;
+          font-family: var(--font-display);
+          font-size: 0.775rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          text-decoration: none;
+          color: var(--text-primary);
+          white-space: nowrap;
+          transition: background 0.15s ease, color 0.15s ease;
+        }
+        .gbf-nav__link:hover { background: rgba(200,168,78,0.08); color: var(--color-gold); }
+
+        /* Right controls */
+        .gbf-nav__controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: auto; }
+
+        /* Icon button (theme toggle) */
+        .gbf-icon-btn {
+          display: flex; align-items: center; justify-content: center;
+          width: 36px; height: 36px;
+          border-radius: 50%;
+          background: var(--gold-bg);
+          border: 1px solid var(--border);
+          cursor: pointer;
+          transition: background 0.2s ease;
+          flex-shrink: 0;
+        }
+        .gbf-icon-btn:hover { background: rgba(200,168,78,0.15); }
+        .gbf-icon-btn--sm { width: 32px; height: 32px; }
+
+        /* Language button */
+        .gbf-lang-btn {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 7px 12px; border-radius: 20px;
+          background: var(--gold-bg); border: 1px solid var(--border);
+          cursor: pointer; color: var(--color-gold);
+          font-family: var(--font-display); font-size: 0.775rem; letter-spacing: 0.05em;
+          transition: background 0.2s ease;
+        }
+        .gbf-lang-btn:hover { background: rgba(200,168,78,0.15); }
+        .gbf-lang-btn__flag { font-size: 1rem; line-height: 1; }
+
+        /* Language panel */
+        .gbf-lang-panel {
+          position: absolute; top: calc(100% + 10px); right: 0;
+          min-width: 178px; border-radius: 14px; overflow: hidden;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 16px 40px rgba(0,0,0,0.18);
+          z-index: 200;
+          animation: gbf-fade-in 0.14s ease forwards;
+        }
+        .gbf-lang-panel__item {
+          width: 100%; display: flex; align-items: center; gap: 10px;
+          padding: 11px 16px;
+          background: transparent; border: none;
+          border-bottom: 1px solid var(--border-faint);
+          cursor: pointer; color: var(--text-secondary);
+          font-family: var(--font-body); font-size: 0.9rem; text-align: left;
+          transition: background 0.12s ease, color 0.12s ease;
+          direction: ltr;
+        }
+        .gbf-lang-panel__item:last-child { border-bottom: none; }
+        .gbf-lang-panel__item:hover { background: rgba(200,168,78,0.07); color: var(--color-gold); }
+        .gbf-lang-panel__item--active { color: var(--color-gold); }
+
+        /* Dropdown */
+        .gbf-dropdown { position: relative; }
+        .gbf-dropdown__panel {
+          display: none;
+          position: absolute; top: calc(100% + 8px);
+          left: 50%; transform: translateX(-50%);
+          min-width: 210px; border-radius: 14px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 16px 40px rgba(0,0,0,0.18);
+          z-index: 150;
+        }
+        .gbf-dropdown__panel::before {
+          content: '';
+          position: absolute;
+          top: -16px; left: 0; right: 0;
+          height: 16px;
+        }
+        .gbf-dropdown__item:first-child { border-radius: 14px 14px 0 0; }
+        .gbf-dropdown__item:last-child  { border-radius: 0 0 14px 14px; border-bottom: none; }
+        .gbf-dropdown__item:only-child  { border-radius: 14px; }
+        .gbf-dropdown:hover .gbf-dropdown__panel {
+          display: block;
+          animation: gbf-fade-in 0.14s ease forwards;
+        }
+        .gbf-dropdown:hover .gbf-nav__link svg { transform: rotate(180deg); }
+        .gbf-dropdown__item {
+          display: flex; align-items: center;
+          padding: 12px 18px;
+          color: var(--text-secondary); text-decoration: none;
+          font-family: var(--font-body); font-size: 0.875rem; letter-spacing: 0.01em;
+          border-bottom: 1px solid var(--border-faint);
+          transition: background 0.12s ease, color 0.12s ease;
+          white-space: nowrap;
+        }
+        .gbf-dropdown__item:last-child { border-bottom: none; }
+        .gbf-dropdown__item:hover { background: rgba(200,168,78,0.07); color: var(--color-gold); }
+
+        /* Shared animation */
+        @keyframes gbf-fade-in {
+          from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* Hamburger */
+        .gbf-mobile-controls { display: none; align-items: center; gap: 8px; margin-left: auto; }
+        .gbf-hamburger {
+          position: relative; width: 30px; height: 20px;
+          background: none; border: none; cursor: pointer; padding: 0; flex-shrink: 0;
+        }
+        .gbf-hamburger__bar {
+          position: absolute; left: 0; width: 100%; height: 2px;
+          border-radius: 2px; background: var(--text-primary);
+          transition: all 0.3s ease;
+        }
+        .gbf-hamburger__bar--1 { top: 0; }
+        .gbf-hamburger__bar--2 { top: 9px; }
+        .gbf-hamburger__bar--3 { top: 18px; }
+        .gbf-hamburger__bar--1.open { top: 9px; transform: rotate(45deg); background: var(--color-gold); }
+        .gbf-hamburger__bar--2.open { opacity: 0; }
+        .gbf-hamburger__bar--3.open { top: 9px; transform: rotate(-45deg); background: var(--color-gold); }
+
+        /* Mobile menu overlay */
+        .gbf-mobile-menu {
+          position: fixed; inset: 0; z-index: 9998;
+          background: var(--mobile-menu-bg); overflow-y: auto;
+        }
+        .gbf-mobile-menu__body { padding: 92px 28px 48px; display: flex; flex-direction: column; }
+
+        /* Language chips row */
+        .gbf-mobile-menu__langs {
+          display: flex; flex-wrap: wrap; gap: 8px;
+          padding-bottom: 20px; margin-bottom: 4px;
+          border-bottom: 1px solid var(--border-faint);
+        }
+        .gbf-mobile-menu__lang-chip {
+          display: inline-flex; align-items: center; gap: 5px;
+          padding: 5px 12px; border-radius: 20px;
+          border: 1px solid var(--border); background: transparent;
+          cursor: pointer; color: var(--text-muted);
+          font-family: var(--font-display); font-size: 0.78rem;
+          transition: all 0.15s ease;
+        }
+        .gbf-mobile-menu__lang-chip.active {
+          background: var(--gold-bg); border-color: var(--color-gold); color: var(--color-gold);
+        }
+
+        /* Nav rows */
+        .gbf-mobile-menu__row { border-bottom: 1px solid var(--border-faint); }
+        .gbf-mobile-menu__row-top {
+          display: flex; align-items: center; justify-content: space-between;
+        }
+        .gbf-mobile-menu__row-label {
+          flex: 1; padding: 16px 0;
+          color: var(--text-primary); text-decoration: none;
+          font-family: var(--font-display); font-size: 1.1rem;
+          text-transform: uppercase; letter-spacing: 0.06em;
+        }
+        .gbf-mobile-menu__expand {
+          background: none; border: none; color: var(--color-gold);
+          cursor: pointer; padding: 8px; display: flex; align-items: center;
+        }
+
+        /* Sub-links */
+        .gbf-mobile-menu__sub { padding: 4px 0 14px 16px; }
+        .gbf-mobile-menu__sub-link {
+          display: block; padding: 10px 0;
+          color: var(--text-muted); text-decoration: none;
+          font-family: var(--font-body); font-size: 0.95rem;
+          border-bottom: 1px solid var(--border-faint);
+          transition: color 0.15s ease;
+        }
+        .gbf-mobile-menu__sub-link:last-child { border-bottom: none; }
+        .gbf-mobile-menu__sub-link:hover { color: var(--color-gold); }
+
+        /* Responsive breakpoint */
         @media (max-width: 1024px) {
-          .desktop-nav { display: none !important; }
-          .mobile-controls { display: flex !important; }
+          .gbf-nav__links    { display: none; }
+          .gbf-nav__controls { display: none; }
+          .gbf-mobile-controls { display: flex; }
         }
-        .dropdown { position: relative; }
-        .dropdown-menu {
-          display: none; position: absolute; top: calc(100% + 12px); left: 50%; transform: translateX(-50%);
-          background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-          overflow: hidden; min-width: 200px; box-shadow: 0 12px 40px rgba(0,0,0,0.3); z-index: 100;
-        }
-        .dropdown:hover .dropdown-menu { display: block; }
-        .dropdown-menu a { display: block; padding: 12px 20px; color: var(--text-secondary); text-decoration: none; font-family: var(--font-body); font-size: 0.9rem; border-bottom: 1px solid var(--border-faint); transition: background 0.2s, color 0.2s; }
-        .dropdown-menu a:hover { background: var(--gold-bg); color: var(--color-gold); }
-        .nav-link { font-family: var(--font-display); font-size: 0.8rem; letter-spacing: 0.08em; text-decoration: none; color: var(--text-primary); transition: color 0.2s; }
-        .nav-link:hover { color: var(--color-gold); }
-        .mobile-menu { position: fixed; inset: 0; z-index: 9998; padding: 100px 32px 40px; overflow-y: auto; background: var(--mobile-menu-bg); }
+
       `}</style>
     </>
   );
