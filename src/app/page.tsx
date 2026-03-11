@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import CountdownTimer from "@/components/CountdownTimer";
 import SponsorsCarousel from "@/components/SponsorsCarousel";
 import Reveal from "@/components/Reveal";
@@ -32,19 +33,22 @@ export default function HomePage() {
       <section style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0 }}>
           {/* Task 1: slight blur on background */}
-          <img
+          <Image
             src="https://static.wixstatic.com/media/335ee3_f36a88cb36434c28be8630bc8dddef00~mv2.png/v1/fill/w_1920,h_1080,al_c,q_90,enc_avif,quality_auto/dok5.png"
             alt="Greek Barber Festival"
-            style={{ width: "100%", height: "100%", objectFit: "cover", filter: "blur(3px)", transform: "scale(1.04)" }}
+            fill
+            style={{ objectFit: "cover", filter: "blur(3px)", transform: "scale(1.04)" }}
           />
           <div className="hero-overlay" style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(13,13,13,0.45) 0%, rgba(13,13,13,0.55) 40%, rgba(13,13,13,0.82) 70%, rgba(13,13,13,0.97) 100%)" }} />
         </div>
 
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "0 24px", maxWidth: 900, margin: "0 auto" }}>
-          <img
+          <Image
               src="/8thgbfest-white.png"
               alt="8th GBF Logo"
-              style={{ height: "clamp(120px, 20vw, 200px)", display: "block", margin: "0 auto 24px" }}
+              width={200}
+              height={200}
+              style={{ height: "clamp(120px, 20vw, 200px)", width: "auto", display: "block", margin: "0 auto 24px" }}
             />
 
           <h1 style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)", color: "var(--text-primary)", marginBottom: 8 }}>
@@ -54,7 +58,7 @@ export default function HomePage() {
             <h2 style={{ fontSize: "clamp(1rem, 2.5vw, 1.5rem)", color: "#ddd", fontWeight: 400 }}>
               {t("hero_factory")}
             </h2>
-            <img src="https://static.wixstatic.com/media/335ee3_8bbc727aac9149779115e8f126a96b37~mv2.png/v1/fill/w_94,h_72,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/%CF%80%CE%B5%CF%842.png" alt="Butterfly" style={{ height: 28 }} />
+            <Image src="https://static.wixstatic.com/media/335ee3_8bbc727aac9149779115e8f126a96b37~mv2.png/v1/fill/w_94,h_72,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/%CF%80%CE%B5%CF%842.png" alt="Butterfly" width={94} height={72} style={{ height: 28, width: "auto" }} />
           </div>
           <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", marginBottom: 32 }}>{t("hero_address_short")}</p>
 
@@ -122,11 +126,12 @@ export default function HomePage() {
               <Reveal key={i} delay={i * 150}>
                 <a href={educator.link} target="_blank" rel="noopener noreferrer" className="card-hover" style={{ display: "block", textDecoration: "none", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(200,168,78,0.15)", width: 260 }}>
                   <div className="img-zoom">
-                    <img
+                    <Image
                       src={educator.img}
                       alt={educator.name}
+                      width={260}
+                      height={325}
                       style={{ width: "100%", height: 325, objectFit: "cover" }}
-                      onError={(e) => { (e.target as HTMLImageElement).src = "https://static.wixstatic.com/media/335ee3_f27cef887a604cd1b014df6bb42a4aad~mv2.jpg"; }}
                     />
                   </div>
                   <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 8, background: "rgba(13,13,13,0.8)" }}>
@@ -150,9 +155,11 @@ export default function HomePage() {
 
       {/* Hero Photo Section */}
       <section style={{ position: "relative", overflow: "hidden" }}>
-        <img
+        <Image
           src="https://static.wixstatic.com/media/335ee3_e9e30a3fd4b64fc8a1a12b8e5df1042b~mv2.jpg"
           alt="Festival Scene"
+          width={1920}
+          height={1080}
           style={{ width: "100%", height: "auto", display: "block" }}
         />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(13,13,13,0.5), rgba(13,13,13,0.8))", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "0 24px" }}>
@@ -161,7 +168,7 @@ export default function HomePage() {
           </h2>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <p style={{ color: "#ddd", fontSize: "1.1rem" }}>{t("hero_factory")}</p>
-            <img src="https://static.wixstatic.com/media/335ee3_8bbc727aac9149779115e8f126a96b37~mv2.png/v1/fill/w_68,h_52,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/%CF%80%CE%B5%CF%842.png" alt="Butterfly" style={{ height: 24 }} />
+            <Image src="https://static.wixstatic.com/media/335ee3_8bbc727aac9149779115e8f126a96b37~mv2.png/v1/fill/w_68,h_52,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/%CF%80%CE%B5%CF%842.png" alt="Butterfly" width={68} height={52} style={{ height: 24, width: "auto" }} />
           </div>
           <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginTop: 4 }}>{t("hero_address_short")}</p>
         </div>
