@@ -3,6 +3,7 @@ import { useState } from "react";
 import PageBanner from "@/components/PageBanner";
 import Lightbox from "@/components/Lightbox";
 import Reveal from "@/components/Reveal";
+import { useLanguage } from "@/components/LanguageContext";
 
 const PHOTOS = [
   { name: "BMW_1077", id: "335ee3_b4430974708e4fb1b7d6c49bab3ff62c" },
@@ -29,29 +30,30 @@ const PHOTOS = [
   { name: "DSC_7592", id: "335ee3_1f4325fbda914c73b1f64314364c5521" },
   { name: "DSC_7591", id: "335ee3_942df6a8cda345d5bf70885ff0d53cd9" },
   { name: "DSC_7590", id: "335ee3_6ddba2984ade4c8799e2c6e1b88aeed8" },
-  { name: "DSC_7587-Edit", id: "335ee3_33380ec5bae2493aa6a9ebf38310f4b9" },
+  { name: "DSC_7587", id: "335ee3_33380ec5bae2493aa6a9ebf38310f4b9" },
 ];
 
 const getUrl = (id: string, size: string) =>
   `https://static.wixstatic.com/media/${id}~mv2.jpg/v1/fill/${size},al_c,q_90,enc_avif,quality_auto/${id}~mv2.jpg`;
 
 export default function PhotosPage() {
+  const { t } = useLanguage();
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   return (
     <>
-      <PageBanner title="ΦΩΤΟΓΡΑΦΙΕΣ" image="https://static.wixstatic.com/media/335ee3_c35f964f33b84b5faad69de2635c3e22~mv2.jpg/v1/crop/x_0,y_168,w_1500,h_350/fill/w_1920,h_450,al_c,q_80,enc_avif,quality_auto/DSC_7278.jpg" />
+      <PageBanner title={t("photos_title")} image="https://static.wixstatic.com/media/335ee3_c35f964f33b84b5faad69de2635c3e22~mv2.jpg/v1/crop/x_0,y_168,w_1500,h_350/fill/w_1920,h_450,al_c,q_80,enc_avif,quality_auto/DSC_7278.jpg" />
       <section style={{ padding: "80px 24px", maxWidth: 1200, margin: "0 auto" }}>
         <Reveal>
           <div style={{ textAlign: "center", marginBottom: 40 }}>
-            <p style={{ color: "#ccc", fontSize: "1rem", lineHeight: 1.8 }}>
-              Σας ευχαριστούμε όλους όσους ήσασταν μαζί μας!
+            <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8 }}>
+              {t("photos_thanks")}
             </p>
-            <p style={{ color: "#999", fontSize: "0.9rem" }}>
-              Μπορείτε να κατεβάσετε τις φωτογραφίες στον υπολογιστή σας ή στο κινητό σας, να κάνετε &quot;καρδούλα&quot; και να τις μοιραστείτε στα μέσα κοινωνικής δικτύωσης.
+            <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+              {t("photos_download")}
             </p>
             <p style={{ color: "var(--color-gold)", fontSize: "0.95rem", marginTop: 12, fontFamily: "var(--font-display)" }}>
-              Ραντεβού στο 8ο Greek Barber Festival 26 - 27 Απριλίου 2026, ΑΘΗΝΑ
+              {t("photos_see_you")}
             </p>
           </div>
         </Reveal>

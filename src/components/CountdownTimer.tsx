@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 export default function CountdownTimer() {
+  const { t } = useLanguage();
   const target = new Date("2026-04-26T10:00:00+03:00").getTime();
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
@@ -22,10 +24,10 @@ export default function CountdownTimer() {
   }, [target]);
 
   const units = [
-    { value: timeLeft.days, label: "ΗΜΕΡΕΣ" },
-    { value: timeLeft.hours, label: "ΩΡΕΣ" },
-    { value: timeLeft.minutes, label: "ΛΕΠΤΑ" },
-    { value: timeLeft.seconds, label: "ΔΕΥΤ." },
+    { value: timeLeft.days, label: t("countdown_days") },
+    { value: timeLeft.hours, label: t("countdown_hours") },
+    { value: timeLeft.minutes, label: t("countdown_minutes") },
+    { value: timeLeft.seconds, label: t("countdown_seconds") },
   ];
 
   return (
