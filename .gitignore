@@ -11,6 +11,13 @@ out/
 *.pem
 .env*.local
 
+# deployment
+.vercel/
+
 # archives
 *.zip
 *.tar.gz
+
+# stray files
+dok5_light.png
+page.tsx
