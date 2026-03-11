@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 
 const SPONSOR_LOGOS = [
   { src: "https://static.wixstatic.com/media/335ee3_471e976778f74ce4889a298051082e37~mv2.jpg/v1/fill/w_200,h_200,al_c,q_80,enc_avif,quality_auto/Men_Stories_Logo_Noir_Final_Vectoris%C3%A9_jp.jpg", alt: "High Hair / Farmavita", dark: true },
@@ -111,7 +112,7 @@ export default function SponsorsCarousel() {
               pointerEvents: "none",
             }}
           >
-            <img src={logo.src} alt={logo.alt} style={{ maxHeight: 70, maxWidth: 140, objectFit: "contain" }} draggable={false} />
+            <Image src={logo.src} alt={logo.alt} width={140} height={70} style={{ objectFit: "contain", maxHeight: 70, maxWidth: 140 }} draggable={false} />
           </div>
         ))}
       </div>

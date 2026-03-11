@@ -1,7 +1,6 @@
 "use client";
 import PageBanner from "@/components/PageBanner";
 import Reveal from "@/components/Reveal";
-import Link from "next/link";
 import { useLanguage, Language } from "@/components/LanguageContext";
 
 const NOTES: Record<Language, string[]> = {

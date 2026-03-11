@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useLanguage, LANG_LABELS, Language } from "./LanguageContext";
 
 // ── Chevron icon ──────────────────────────────────────────────────────────────
@@ -107,7 +108,7 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="gbf-nav__logo">
-            <img src="/8thgbfest-white.png" alt="Greek Barber Festival" />
+            <Image src="/8thgbfest-white.png" alt="Greek Barber Festival" width={160} height={52} style={{ width: "auto" }} />
           </Link>
 
           {/* Desktop links */}
