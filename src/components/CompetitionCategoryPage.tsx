@@ -1,14 +1,14 @@
 "use client";
 import PageBanner from "./PageBanner";
 import Reveal from "./Reveal";
-import { useLanguage } from "./LanguageContext";
+import { useLanguage, TranslationKey } from "./LanguageContext";
 
 interface Props {
   bannerTitle: string;
   bannerImage: string;
   categoryNumber: number;
   categoryTitle: string;
-  descKey: string;
+  descKey: TranslationKey;
   prereqsKey: string;
   criteriaKey: string;
   hasBonus?: boolean;

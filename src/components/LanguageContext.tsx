@@ -56,7 +56,8 @@ export type TranslationKey =
   | "comp_notes_title" | "comp_notes_more" | "comp_notes_link"
   | "comp_cat_oldschool_desc" | "comp_cat_modern_desc" | "comp_cat_fastest_desc" | "comp_cat_freestyle_desc"
   | "comp_cat_time_unit"
-  | "nav_student_comp" | "nav_comp_cost" | "nav_comp_rules";
+  | "nav_student_comp" | "nav_comp_cost" | "nav_comp_rules"
+  | "cat_duration" | "cat_description" | "cat_prereqs" | "cat_criteria" | "cat_bonus";
 
 type Translations = Record<TranslationKey, string>;
 
@@ -195,6 +196,11 @@ const T: Record<Language, Translations> = {
     nav_student_comp: "Μαθητικός Διαγωνισμός",
     nav_comp_cost: "Κόστος Συμμετοχής",
     nav_comp_rules: "Όροι Συμμετοχής",
+    cat_duration: "Διάρκεια:",
+    cat_description: "Περιγραφή",
+    cat_prereqs: "Προαπαιτούμενα",
+    cat_criteria: "Κριτήρια",
+    cat_bonus: "Bonus πόντοι διαθέσιμοι!",
   },
   en: {
     nav_tickets: "TICKETS",
@@ -330,6 +336,11 @@ const T: Record<Language, Translations> = {
     nav_student_comp: "Student Competition",
     nav_comp_cost: "Competition Fees",
     nav_comp_rules: "Terms & Conditions",
+    cat_duration: "Duration:",
+    cat_description: "Description",
+    cat_prereqs: "Prerequisites",
+    cat_criteria: "Criteria",
+    cat_bonus: "Bonus points available!",
   },
   es: {
     nav_tickets: "ENTRADAS",
@@ -465,6 +476,11 @@ const T: Record<Language, Translations> = {
     nav_student_comp: "Competición Estudiantil",
     nav_comp_cost: "Cuotas de Inscripción",
     nav_comp_rules: "Reglamento",
+    cat_duration: "Duración:",
+    cat_description: "Descripción",
+    cat_prereqs: "Prerrequisitos",
+    cat_criteria: "Criterios",
+    cat_bonus: "¡Puntos de bonificación disponibles!",
   },
   ar: {
     nav_tickets: "التذاكر",
@@ -600,6 +616,11 @@ const T: Record<Language, Translations> = {
     nav_student_comp: "مسابقة الطلاب",
     nav_comp_cost: "رسوم الاشتراك",
     nav_comp_rules: "الشروط والأحكام",
+    cat_duration: "المدة:",
+    cat_description: "الوصف",
+    cat_prereqs: "المتطلبات",
+    cat_criteria: "المعايير",
+    cat_bonus: "نقاط مكافأة متاحة!",
   },
   pt: {
     nav_tickets: "BILHETES",
@@ -735,6 +756,11 @@ const T: Record<Language, Translations> = {
     nav_student_comp: "Competição Estudantil",
     nav_comp_cost: "Taxas de Inscrição",
     nav_comp_rules: "Regulamento",
+    cat_duration: "Duração:",
+    cat_description: "Descrição",
+    cat_prereqs: "Pré-requisitos",
+    cat_criteria: "Critérios",
+    cat_bonus: "Pontos de bônus disponíveis!",
   },
   de: {
     nav_tickets: "TICKETS",
@@ -870,6 +896,11 @@ const T: Record<Language, Translations> = {
     nav_student_comp: "Schülerwettbewerb",
     nav_comp_cost: "Teilnahmegebühren",
     nav_comp_rules: "Regeln & Bedingungen",
+    cat_duration: "Dauer:",
+    cat_description: "Beschreibung",
+    cat_prereqs: "Voraussetzungen",
+    cat_criteria: "Kriterien",
+    cat_bonus: "Bonuspunkte verfügbar!",
   },
 };
 
@@ -877,6 +908,7 @@ interface AppContextType {
   lang: Language;
   setLang: (l: Language) => void;
   t: (key: TranslationKey) => string;
+  tArr: (key: string) => string[];
   theme: Theme;
   toggleTheme: () => void;
 }
@@ -885,6 +917,7 @@ const AppContext = createContext<AppContextType>({
   lang: "el",
   setLang: () => {},
   t: (k) => k,
+  tArr: () => [],
   theme: "dark",
   toggleTheme: () => {},
 });
@@ -919,8 +952,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = (key: TranslationKey): string => T[lang]?.[key] ?? T.el[key] ?? key;
 
+  const tArr = (key: string): string[] => {
+    const val = (T[lang] as Record<string, string>)?.[key] ?? (T.el as Record<string, string>)[key] ?? "";
+    return val ? val.split("\n").filter(Boolean) : [];
+  };
+
   return (
-    <AppContext.Provider value={{ lang, setLang, t, theme, toggleTheme }}>
+    <AppContext.Provider value={{ lang, setLang, t, tArr, theme, toggleTheme }}>
       {children}
     </AppContext.Provider>
   );
