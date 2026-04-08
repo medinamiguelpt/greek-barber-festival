@@ -1292,11 +1292,12 @@ function Badge({ status, C }: { status: string; C: Colors }) {
 }
 
 // ── HubTab ────────────────────────────────────────────────────────────────────
-function HubTab({ agent, C, density, showServices, loading, profile, conversations, aiBookings, liveCall, onTabChange }: {
+function HubTab({ agent, C, density, showServices, loading, profile, conversations, aiBookings, liveCall, onTabChange, onConvSelect }: {
   agent: AgentData | null; C: Colors; density: DensityKey;
   showServices: boolean; loading: boolean; profile: BusinessProfile;
   conversations: ConversationSummary[]; aiBookings: AiBooking[]; liveCall: boolean;
   onTabChange: (tab: "hub" | "ledger" | "analytics") => void;
+  onConvSelect: (convId: string) => void;
 }) {
   const t = useT();
   const languages = agent?.languages ?? ["el", "en", "es", "pt", "fr", "de", "ar"];
@@ -1474,7 +1475,7 @@ function HubTab({ agent, C, density, showServices, loading, profile, conversatio
               return (
                 <div key={entry.conversation_id}
                   className="gbf-feed-card"
-                  onClick={() => { sessionStorage.setItem("gbf_focus_conv", entry.conversation_id); onTabChange("ledger"); }}
+                  onClick={() => onConvSelect(entry.conversation_id)}
                   title="Click to view full transcript in Ledger"
                   style={{ border: `1px solid ${isLiveEntry ? entry.feedColor + "55" : C.borderFaint}`, borderRadius: 14, background: isLiveEntry ? entry.feedBg : C.surfaceAlt, overflow: "hidden" }}>
 
@@ -1555,32 +1556,25 @@ function HubTab({ agent, C, density, showServices, loading, profile, conversatio
 }
 
 // ── LedgerTab ─────────────────────────────────────────────────────────────────
-function LedgerTab({ C, density, aiBookings, liveCall }: {
+function LedgerTab({ C, density, aiBookings, liveCall, selectedConvId, onConvSelected }: {
   C: Colors; density: DensityKey; aiBookings: AiBooking[]; liveCall: boolean;
+  selectedConvId?: string | null; onConvSelected?: () => void;
 }) {
   const t = useT();
   const [filterDate,   setFilterDate]   = useState("all");
   const [filterBarber, setFilterBarber] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [viewMode,     setViewMode]     = useState<"appointments" | "calls" | "all">("all");
-  // Read sessionStorage synchronously during render so the row is expanded
-  // on frame 0 — no effect delay, no async race.
-  const [expandedCall, setExpandedCall] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    const id = sessionStorage.getItem("gbf_focus_conv");
-    if (id) sessionStorage.removeItem("gbf_focus_conv");
-    return id ?? null;
-  });
+  const [expandedCall, setExpandedCall] = useState<string | null>(null);
   const [transcripts,  setTranscripts]  = useState<Record<string, ConversationDetail>>({});
   const [loadingCallId,setLoadingCallId]= useState<string | null>(null);
+  const transcriptsRef = useRef(transcripts);
+  useEffect(() => { transcriptsRef.current = transcripts; }, [transcripts]);
   const pad = DENSITY_PAD[density];
 
-  // Keep a ref to the initial focused id for the mount effect below
-  const mountFocusId = useRef(expandedCall);
-
-  // ── Fetch transcript for a given id (no toggle) ──────────────────────────
-  async function fetchTranscript(id: string, summary?: string) {
-    if (transcripts[id]) return;
+  // ── Fetch transcript (no toggle behaviour) ────────────────────────────────
+  const fetchTranscript = useCallback(async (id: string, summary?: string) => {
+    if (transcriptsRef.current[id]) return;
     if (id.startsWith("demo_")) {
       setTranscripts(prev => ({ ...prev, [id]: { conversation_id: id, status: "done", transcript: DEMO_TRANSCRIPTS[id] ?? [], metadata: { start_time_unix_secs: 0, call_duration_secs: 0 }, analysis: { transcript_summary: summary ?? "" } } }));
       return;
@@ -1591,30 +1585,27 @@ function LedgerTab({ C, density, aiBookings, liveCall }: {
       setTranscripts(prev => ({ ...prev, [id]: data }));
     } catch {}
     finally { setLoadingCallId(null); }
-  }
+  }, []);
 
-  // ── On mount: load transcript + scroll for deep-linked entry ─────────────
+  // ── React whenever parent selects a conversation from the Hub feed ────────
   useEffect(() => {
-    const id = mountFocusId.current;
-    if (!id) return;
-    // Load transcript (row is already expanded via useState initializer)
-    fetchTranscript(id);
-    // Scroll after React paints the expanded row
-    const t1 = setTimeout(() => {
-      const el = document.getElementById(`ledger-entry-${id}`);
+    if (!selectedConvId) return;
+    setExpandedCall(selectedConvId);
+    fetchTranscript(selectedConvId);
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`ledger-entry-${selectedConvId}`);
       if (el) {
         const top = el.getBoundingClientRect().top + window.pageYOffset - 90;
         window.scrollTo({ top, behavior: "smooth" });
         el.style.outline = `2.5px solid ${C.accent}`;
         el.style.outlineOffset = "2px";
         el.style.borderRadius = "14px";
-        const t2 = setTimeout(() => { el.style.outline = ""; el.style.outlineOffset = ""; }, 2500);
-        return () => clearTimeout(t2);
+        setTimeout(() => { el.style.outline = ""; el.style.outlineOffset = ""; }, 2500);
       }
-    }, 200);
-    return () => clearTimeout(t1);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      onConvSelected?.();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [selectedConvId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── User-click toggle: expand / collapse ─────────────────────────────────
   async function loadCallTranscript(id: string, summary?: string) {
@@ -2317,6 +2308,7 @@ export default function DashboardPage() {
   const [langOpen,      setLangOpen]      = useState(false);
   const [C,             setC]             = useState<Colors>(PALETTES.botanical.light);
   const [tab,           setTab]           = useState<"hub" | "ledger" | "analytics">("hub");
+  const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const widgetRef = useRef<HTMLDivElement>(null);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [liveCall,      setLiveCall]      = useState(false);
@@ -2340,7 +2332,7 @@ export default function DashboardPage() {
     setSettings(s);
     setProfile(p);
     setLangSettings(l);
-    setTab(s.defaultTab);
+    setTab("hub");
     setC(getColors(s));
   }, [authReady]);
 
@@ -2563,12 +2555,19 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Content */}
+        {/* Content — all three tabs stay mounted; CSS hides the inactive ones */}
         <div className="gbf-content" style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div key={tab} className="gbf-tab-content">
-            {tab === "hub"       && <HubTab agent={agent} C={C} density={settings.density} showServices={settings.showServices} loading={loading} profile={profile} conversations={conversations} aiBookings={aiBookings} liveCall={liveCall} onTabChange={setTab} />}
-            {tab === "ledger"    && <LedgerTab C={C} density={settings.density} aiBookings={aiBookings} liveCall={liveCall} />}
-            {tab === "analytics" && <AnalyticsTab C={C} density={settings.density} conversations={conversations} liveCall={liveCall} />}
+          <div style={{ display: tab === "hub"       ? "block" : "none" }} className="gbf-tab-content">
+            <HubTab agent={agent} C={C} density={settings.density} showServices={settings.showServices} loading={loading} profile={profile} conversations={conversations} aiBookings={aiBookings} liveCall={liveCall}
+              onTabChange={setTab}
+              onConvSelect={(id) => { setSelectedConvId(id); setTab("ledger"); }} />
+          </div>
+          <div style={{ display: tab === "ledger"    ? "block" : "none" }} className="gbf-tab-content">
+            <LedgerTab C={C} density={settings.density} aiBookings={aiBookings} liveCall={liveCall}
+              selectedConvId={selectedConvId} onConvSelected={() => setSelectedConvId(null)} />
+          </div>
+          <div style={{ display: tab === "analytics" ? "block" : "none" }} className="gbf-tab-content">
+            <AnalyticsTab C={C} density={settings.density} conversations={conversations} liveCall={liveCall} />
           </div>
         </div>
 
