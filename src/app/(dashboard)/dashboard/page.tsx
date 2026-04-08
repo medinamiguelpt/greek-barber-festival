@@ -1563,10 +1563,20 @@ function LedgerTab({ C, density, aiBookings, liveCall }: {
   const [filterBarber, setFilterBarber] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [viewMode,     setViewMode]     = useState<"appointments" | "calls" | "all">("all");
-  const [expandedCall, setExpandedCall] = useState<string | null>(null);
+  // Read sessionStorage synchronously during render so the row is expanded
+  // on frame 0 — no effect delay, no async race.
+  const [expandedCall, setExpandedCall] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const id = sessionStorage.getItem("gbf_focus_conv");
+    if (id) sessionStorage.removeItem("gbf_focus_conv");
+    return id ?? null;
+  });
   const [transcripts,  setTranscripts]  = useState<Record<string, ConversationDetail>>({});
   const [loadingCallId,setLoadingCallId]= useState<string | null>(null);
   const pad = DENSITY_PAD[density];
+
+  // Keep a ref to the initial focused id for the mount effect below
+  const mountFocusId = useRef(expandedCall);
 
   // ── Fetch transcript for a given id (no toggle) ──────────────────────────
   async function fetchTranscript(id: string, summary?: string) {
@@ -1583,29 +1593,26 @@ function LedgerTab({ C, density, aiBookings, liveCall }: {
     finally { setLoadingCallId(null); }
   }
 
-  // ── On mount: check sessionStorage for a pending deep-link ───────────────
+  // ── On mount: load transcript + scroll for deep-linked entry ─────────────
   useEffect(() => {
-    const convId = sessionStorage.getItem("gbf_focus_conv");
-    if (!convId) return;
-    sessionStorage.removeItem("gbf_focus_conv");
-
-    // Expand the row immediately
-    setExpandedCall(convId);
-    // Load the transcript
-    fetchTranscript(convId);
-    // Scroll to the row after React has painted it
-    setTimeout(() => {
-      const el = document.getElementById(`ledger-entry-${convId}`);
+    const id = mountFocusId.current;
+    if (!id) return;
+    // Load transcript (row is already expanded via useState initializer)
+    fetchTranscript(id);
+    // Scroll after React paints the expanded row
+    const t1 = setTimeout(() => {
+      const el = document.getElementById(`ledger-entry-${id}`);
       if (el) {
-        const HEADER_OFFSET = 90;
-        const top = el.getBoundingClientRect().top + window.pageYOffset - HEADER_OFFSET;
+        const top = el.getBoundingClientRect().top + window.pageYOffset - 90;
         window.scrollTo({ top, behavior: "smooth" });
         el.style.outline = `2.5px solid ${C.accent}`;
         el.style.outlineOffset = "2px";
         el.style.borderRadius = "14px";
-        setTimeout(() => { if (el) { el.style.outline = ""; el.style.outlineOffset = ""; } }, 2500);
+        const t2 = setTimeout(() => { el.style.outline = ""; el.style.outlineOffset = ""; }, 2500);
+        return () => clearTimeout(t2);
       }
-    }, 350);
+    }, 200);
+    return () => clearTimeout(t1);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
