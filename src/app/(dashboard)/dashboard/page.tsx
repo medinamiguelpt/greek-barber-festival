@@ -945,7 +945,6 @@ function SettingsPanel({
   const DashboardSection = () => (
     <div>
       {section("Data", "Configure how the dashboard fetches and displays live data")}
-      {selectRow("Default tab", settings.defaultTab, [["hub","AI Receptionist Hub"],["ledger","Appointment Ledger"]], v => onUpdate({ defaultTab: v as Settings["defaultTab"] }))}
       {selectRow("Auto-refresh", settings.autoRefresh, [["off","Off"],["30s","Every 30 s"],["1m","Every minute"],["5m","Every 5 min"]], v => onUpdate({ autoRefresh: v as Settings["autoRefresh"] }))}
       <div style={{ marginTop: 20, background: C.accentLight, borderRadius: 10, padding: "14px 16px", border: `1px solid ${C.border}` }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 4 }}>Data sources</div>
