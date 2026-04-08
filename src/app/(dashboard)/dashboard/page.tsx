@@ -1296,7 +1296,7 @@ function HubTab({ agent, C, density, showServices, loading, profile, conversatio
   agent: AgentData | null; C: Colors; density: DensityKey;
   showServices: boolean; loading: boolean; profile: BusinessProfile;
   conversations: ConversationSummary[]; aiBookings: AiBooking[]; liveCall: boolean;
-  onTabChange: (tab: "hub" | "ledger" | "analytics", focusId?: string) => void;
+  onTabChange: (tab: "hub" | "ledger" | "analytics") => void;
 }) {
   const t = useT();
   const languages = agent?.languages ?? ["el", "en", "es", "pt", "fr", "de", "ar"];
@@ -1474,7 +1474,7 @@ function HubTab({ agent, C, density, showServices, loading, profile, conversatio
               return (
                 <div key={entry.conversation_id}
                   className="gbf-feed-card"
-                  onClick={() => onTabChange("ledger", entry.conversation_id)}
+                  onClick={() => { sessionStorage.setItem("gbf_focus_conv", entry.conversation_id); onTabChange("ledger"); }}
                   title="Click to view full transcript in Ledger"
                   style={{ border: `1px solid ${isLiveEntry ? entry.feedColor + "55" : C.borderFaint}`, borderRadius: 14, background: isLiveEntry ? entry.feedBg : C.surfaceAlt, overflow: "hidden" }}>
 
@@ -1555,22 +1555,20 @@ function HubTab({ agent, C, density, showServices, loading, profile, conversatio
 }
 
 // ── LedgerTab ─────────────────────────────────────────────────────────────────
-function LedgerTab({ C, density, aiBookings, liveCall, focusId, onFocusConsumed }: {
+function LedgerTab({ C, density, aiBookings, liveCall }: {
   C: Colors; density: DensityKey; aiBookings: AiBooking[]; liveCall: boolean;
-  focusId?: string | null; onFocusConsumed?: () => void;
 }) {
   const t = useT();
   const [filterDate,   setFilterDate]   = useState("all");
   const [filterBarber, setFilterBarber] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [viewMode,     setViewMode]     = useState<"appointments" | "calls" | "all">("all");
-  // Pre-expand the focused entry immediately so the row is visible before the transcript loads
-  const [expandedCall, setExpandedCall] = useState<string | null>(focusId ?? null);
+  const [expandedCall, setExpandedCall] = useState<string | null>(null);
   const [transcripts,  setTranscripts]  = useState<Record<string, ConversationDetail>>({});
   const [loadingCallId,setLoadingCallId]= useState<string | null>(null);
   const pad = DENSITY_PAD[density];
 
-  // ── Fetch transcript without toggle — used internally ─────────────────────
+  // ── Fetch transcript for a given id (no toggle) ──────────────────────────
   async function fetchTranscript(id: string, summary?: string) {
     if (transcripts[id]) return;
     if (id.startsWith("demo_")) {
@@ -1585,33 +1583,33 @@ function LedgerTab({ C, density, aiBookings, liveCall, focusId, onFocusConsumed 
     finally { setLoadingCallId(null); }
   }
 
-  // ── On mount: if we arrived from the Hub feed, load + scroll to that entry ─
+  // ── On mount: check sessionStorage for a pending deep-link ───────────────
   useEffect(() => {
-    if (!focusId) return;
-    // Load its transcript immediately
-    fetchTranscript(focusId);
-    // After the transcript renders, scroll the exact row into view at the top
-    const timer = setTimeout(() => {
-      const el = document.getElementById(`ledger-entry-${focusId}`);
+    const convId = sessionStorage.getItem("gbf_focus_conv");
+    if (!convId) return;
+    sessionStorage.removeItem("gbf_focus_conv");
+
+    // Expand the row immediately
+    setExpandedCall(convId);
+    // Load the transcript
+    fetchTranscript(convId);
+    // Scroll to the row after React has painted it
+    setTimeout(() => {
+      const el = document.getElementById(`ledger-entry-${convId}`);
       if (el) {
-        // Use getBoundingClientRect + window.scrollTo so the scroll works even
-        // inside overflow:hidden table wrappers (which block scrollIntoView)
-        const HEADER_OFFSET = 90; // px — accounts for sticky nav + tabs
+        const HEADER_OFFSET = 90;
         const top = el.getBoundingClientRect().top + window.pageYOffset - HEADER_OFFSET;
         window.scrollTo({ top, behavior: "smooth" });
-        // Briefly highlight the row so the manager's eye goes straight to it
         el.style.outline = `2.5px solid ${C.accent}`;
         el.style.outlineOffset = "2px";
         el.style.borderRadius = "14px";
         setTimeout(() => { if (el) { el.style.outline = ""; el.style.outlineOffset = ""; } }, 2500);
       }
-      onFocusConsumed?.();
-    }, 300);
-    return () => clearTimeout(timer);
+    }, 350);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── User-click toggle: expand / collapse a row ────────────────────────────
+  // ── User-click toggle: expand / collapse ─────────────────────────────────
   async function loadCallTranscript(id: string, summary?: string) {
     if (expandedCall === id) { setExpandedCall(null); return; }
     setExpandedCall(id);
@@ -2312,7 +2310,6 @@ export default function DashboardPage() {
   const [langOpen,      setLangOpen]      = useState(false);
   const [C,             setC]             = useState<Colors>(PALETTES.botanical.light);
   const [tab,           setTab]           = useState<"hub" | "ledger" | "analytics">("hub");
-  const [ledgerFocusId, setLedgerFocusId] = useState<string | null>(null);
   const widgetRef = useRef<HTMLDivElement>(null);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [liveCall,      setLiveCall]      = useState(false);
@@ -2562,8 +2559,8 @@ export default function DashboardPage() {
         {/* Content */}
         <div className="gbf-content" style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div key={tab} className="gbf-tab-content">
-            {tab === "hub"       && <HubTab agent={agent} C={C} density={settings.density} showServices={settings.showServices} loading={loading} profile={profile} conversations={conversations} aiBookings={aiBookings} liveCall={liveCall} onTabChange={(t, fid) => { setTab(t); if (fid) setLedgerFocusId(fid); }} />}
-            {tab === "ledger"    && <LedgerTab C={C} density={settings.density} aiBookings={aiBookings} liveCall={liveCall} focusId={ledgerFocusId} onFocusConsumed={() => setLedgerFocusId(null)} />}
+            {tab === "hub"       && <HubTab agent={agent} C={C} density={settings.density} showServices={settings.showServices} loading={loading} profile={profile} conversations={conversations} aiBookings={aiBookings} liveCall={liveCall} onTabChange={setTab} />}
+            {tab === "ledger"    && <LedgerTab C={C} density={settings.density} aiBookings={aiBookings} liveCall={liveCall} />}
             {tab === "analytics" && <AnalyticsTab C={C} density={settings.density} conversations={conversations} liveCall={liveCall} />}
           </div>
         </div>
